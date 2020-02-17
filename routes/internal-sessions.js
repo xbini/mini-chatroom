@@ -6,17 +6,21 @@ const locations = ['sichuan', 'shanghai'];
 const generateSession = () => {
     var session = {
         customerId: parseInt(Math.random() * 10000000),
+        whiteFlag: '00',
+        sessionType: 'web',
+        starbucksId: parseInt(Math.random() * 10000000),
         externalId3APP: 'starbucks app',
         wx_unionId: '23333333',
         wx_openId: '23333333',
-        location: locations[new Date().getTime() % 2]
+        location: locations[new Date().getTime() % 2],
+        ll: locations[new Date().getTime() % 2],
     }
     return session;
 };
 
 const callback = function (req, res, next) {
     const session = generateSession();
-    res.json(schema(session));
+    res.json(session);
 }
 
 router.get('/', callback);
