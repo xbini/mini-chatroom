@@ -21,5 +21,10 @@ router.get('/', function (req, res, next) {
   const { size } = req.query;
   res.json(schema(getUsers(size)));
 });
+router.post('/', function (req, res, next) {
+  const { size } = req.query;
+  console.log(`users post body: `, req.body)
+  res.json(schema(getUsers(size)));
+});
 
 module.exports = router;
