@@ -21,11 +21,13 @@ const generateSession = () => {
         wx_openId: '23333333',
         location: locations[new Date().getTime() % 2],
         ll: locations[new Date().getTime() % 2],
+        xCustomerId: generateCustomerId(),
         xSbuxMemberId: starbucksMemberId,
         xTenantMemberId: 20,
         xTenantMemberToken: null,
         xTenantBodyDigest: 'Y',
-        cause: 'cause value'
+        cause: 'cause value',
+        userId: 'user-01'
     }
     return session;
 };
@@ -33,7 +35,12 @@ const generateSession = () => {
 const callback = function (req, res, next) {
     const session = generateSession();
     console.log('session body:', req.body);
-    res.json(session);
+    console.log('request query:', req.query);
+    const pure = req.query.pure;
+    if (pure == 'yes') {
+        return res.json(session);
+    }
+    return res.json(schema(session));
 }
 
 router.get('/', callback);
