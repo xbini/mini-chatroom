@@ -3,16 +3,17 @@
   "version": "0.0.0",
   "private": true,
   "scripts": {
-    "serve": "nodemon ./server.js",
-    "serve4001": "PORT=4001 nodemon ./server.js",
-    "serve4002": "PORT=4002 nodemon ./server.js",
-    "serve4003": "PORT=4003 nodemon ./server.js",
-    "serve4004": "PORT=4004 nodemon ./server.js"
+    "serve": "node ./server.js",
+    "serve4001": "PORT=4001 node ./server.js",
+    "serve4002": "PORT=4002 node ./server.js",
+    "serve4003": "PORT=4003 node ./server.js",
+    "serve4004": "PORT=4004 node ./server.js"
   },
   "dependencies": {
+    "bunyan": "^1.8.14",
     "cookie-parser": "~1.4.4",
     "debug": "~2.6.9",
     "express": "~4.16.1",
-    "morgan": "~1.9.1"
+    "morgan": "^1.10.0"
   }
 }

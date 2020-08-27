@@ -1,0 +1,14 @@
+version: "3.8"
+services:
+  express-start:
+    build:
+      context: ./
+      dockerfile: Dockerfile
+    volumes:
+      - ./logs2:/usr/local/app/logs
+    ports:
+      - "4000:4000"
+    expose:
+      - "4000"
+    ulimits:
+      nproc: 65535
