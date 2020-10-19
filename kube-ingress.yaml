@@ -1,0 +1,15 @@
+apiVersion: extensions/v1beta1
+kind: Ingress
+metadata:
+  name: kong-ingress
+  annotations:
+    kubernetes.io/ingress.class: kong
+spec:
+  rules:
+    - host: express-start-ingress.lb.com
+      http:
+        paths:
+          - path: /users
+            backend:
+              serviceName: express-start
+              servicePort: 4001

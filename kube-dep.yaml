@@ -1,0 +1,24 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  namespace: kong
+  name: express-start
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: express-start
+  template:
+    metadata:
+      labels:
+        app: express-start
+    spec:
+      containers:
+        - name: express-start
+          image: express-start:1.0
+          resources:
+            limits:
+              memory: "128Mi"
+              cpu: "500m"
+          ports:
+            - containerPort: 4000
