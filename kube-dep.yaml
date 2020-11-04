@@ -17,12 +17,18 @@ spec:
         - name: express-start
           image: express-start:1.0
           imagePullPolicy: IfNotPresent
-          resources:
-            limits:
-              memory: "128Mi"
-              cpu: "500m"
           ports:
             - containerPort: 4000
+      #     volumeMounts:
+      #       - name: nfs-volume #设置的名称，和下面的name要一样的
+      #         mountPath: /usr/local/app/logs #需要挂载的目录
+      #         subPath: express-start-logs #卷的子目录，也就是在nfs服务目录里生成这个子目录
+      # volumes:
+      #   - name: nfs-volume #这个卷的名称，和上面的name要一样的
+      #     nfs: #这里是nfs挂载
+      #       server: 127.0.0.1 #nfs服务器的ip或者域名
+      #       path: "/root/data" #nfs服务配置的挂载目录
+
 ---
 apiVersion: v1
 kind: Service
@@ -34,6 +40,55 @@ spec:
     app: express-start
   type: NodePort
   ports:
-    - port: 4001
-      nodePort: 30001
+    - port: 4000
+      nodePort: 30000
       targetPort: 4000
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: joke-service
+  namespace: kong
+  annotations:
+    konghq.com/override: common-kong-ingress
+spec:
+  ports:
+    - protocol: TCP
+      port: 443
+  type: ExternalName
+  externalName: 47.100.122.205
+---
+apiVersion: configuration.konghq.com/v1
+kind: KongIngress
+metadata:
+  name: common-kong-ingress
+  namespace: kong
+proxy:
+  path: /
+  protocol: https
+route:
+  strip_path: false
+  preserve_host: false
+---
+apiVersion: extensions/v1beta1
+kind: Ingress
+metadata:
+  name: express-start-ingress
+  namespace: kong
+  annotations:
+    konghq.com/override: common-kong-ingress
+    kubernetes.io/ingress.class: kong
+spec:
+  rules:
+    - host: lb.learn.com1
+      http:
+        paths:
+          - path: /
+            backend:
+              serviceName: express-start
+              servicePort: 4000
+          - path: /getJoke
+            backend:
+              serviceName: joke-service
+              servicePort: 443

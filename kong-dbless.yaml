@@ -1,8 +1,8 @@
-apiVersion: v1
-kind: Namespace
-metadata:
-  name: kong
----
+--- # ---
+# apiVersion: v1
+# kind: Namespace
+# metadata:
+#   name: kong
 apiVersion: apiextensions.k8s.io/v1beta1
 kind: CustomResourceDefinition
 metadata:
@@ -571,15 +571,38 @@ spec:
   ports:
     - name: proxy
       port: 80
+      nodePort: 30080
       protocol: TCP
       targetPort: 8000
     - name: proxy-ssl
       port: 443
+      nodePort: 30443
       protocol: TCP
       targetPort: 8443
   selector:
     app: ingress-kong
-  type: LoadBalancer
+  type: NodePort
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: kong-admin
+  namespace: kong
+spec:
+  ports:
+    - name: admin
+      port: 8001
+      protocol: TCP
+      nodePort: 30001
+      targetPort: 8001
+    - name: admin-ssl
+      port: 8444
+      protocol: TCP
+      nodePort: 30444
+      targetPort: 8444
+  selector:
+    app: ingress-kong
+  type: NodePort
 ---
 apiVersion: v1
 kind: Service
@@ -622,9 +645,9 @@ spec:
             - name: KONG_PROXY_LISTEN
               value: 0.0.0.0:8000, 0.0.0.0:8443 ssl http2
             - name: KONG_PORT_MAPS
-              value: 80:8000, 443:8443
+              value: 80:8000, 443:8443, 8001:8001, 8444:8444
             - name: KONG_ADMIN_LISTEN
-              value: 127.0.0.1:8444 ssl
+              value: 0.0.0.0:8001, 0.0.0.0:8444 ssl
             - name: KONG_STATUS_LISTEN
               value: 0.0.0.0:8100
             - name: KONG_DATABASE
@@ -662,6 +685,12 @@ spec:
               protocol: TCP
             - containerPort: 8443
               name: proxy-ssl
+              protocol: TCP
+            - containerPort: 8001
+              name: admin
+              protocol: TCP
+            - containerPort: 8444
+              name: admin-ssl
               protocol: TCP
             - containerPort: 8100
               name: metrics
