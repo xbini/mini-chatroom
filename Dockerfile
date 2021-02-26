@@ -1,10 +1,8 @@
-FROM node:12
+FROM node:14
 
 WORKDIR /usr/local/app
 
 COPY . .
-
-RUN yarn install
 
 CMD [ "npm", "run", "serve"]
 

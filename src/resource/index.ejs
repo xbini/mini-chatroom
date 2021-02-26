@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html lang="zh-cn">
+
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Hello express!</title>
+    </script>
+</head>
+
+<body>
+    <h3>Transfer data to server.</h3>
+    <textarea name="chat-input" id="chat-input" cols="30" rows="10"></textarea>
+    <div>
+        <button id="submit" type="button" class="btn btn-primary">发送</button>
+    </div>
+</body>
+<script>
+    var submitButton = document.querySelector('#submit');
+    var textbox = document.querySelector('#chat-input');
+
+    function submit() {
+        var message = textbox.value;
+        if (!String(message)) {
+            return;
+        }
+        var chatAPI = '/chat';
+        var data = {
+            message: message,
+            time: Date.now().toString()
+        };
+        var options = {
+            body: JSON.stringify(data),
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            }
+        };
+        fetch(chatAPI, options).then(function (res) {
+            console.log(res);
+        });
+    }
+    submitButton.addEventListener('click', submit);
+
+</script>
+
+</html>
