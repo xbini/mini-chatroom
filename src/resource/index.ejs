@@ -5,59 +5,152 @@
     <meta charset="UTF-8">
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Hello express!</title>
+    <title>Chat App</title>
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@4.6.0/dist/css/bootstrap.min.css"
         integrity="sha384-B0vP5xmATw1+K9KRQjQERJvTumQW0nPEzvF6L/Z6nronJ3oUOFUFpCjEUQouq2+l" crossorigin="anonymous">
+    <script src="https://cdn.jsdelivr.net/npm/socket.io-client/dist/socket.io.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/dayjs@1.10.4/dayjs.min.js"></script>
+    <style>
+        .main {
+            height: 100vh;
+            flex-direction: column;
+        }
+
+        .title {
+            margin: 0 !important;
+            padding: 15px;
+        }
+
+        .comment {
+            height: calc(100vh - 132px);
+            max-height: calc(100vh - 132px);
+            overflow: auto;
+            margin: 10px 0;
+        }
+
+        .comment img.avatar {
+            width: 40px;
+            height: 40px;
+            max-width: 40px;
+            max-height: 40px;
+        }
+
+        .comment li {
+            padding-top: 10px;
+        }
+
+    </style>
 </head>
 
 <body>
-    <div class="container">
-        <form class="row">
-            <div class="form-group col-sm-12">
-                <h3>Transfer data to server.</h3>
+    <div class="container-fluid text-body row m-0 main">
+        <div class="row bg-primary">
+            <h4 class="col-12 text-white title">Chat App</h4>
+        </div>
+        <ul class="comment list-unstyled" id="comment">
+            <!-- <li class="row m-0 shadow-sm">
+                <img class="avatar"
+                    src="https://www.bing.com/th?id=AMMS_53c8f51dc7c2d0f4f64fb1cd68e8bbc9&w=72&h=72&c=7&rs=1&qlt=80&cdv=1&dpr=2&pid=16.1"
+                    alt="avatar" />
+                <div class="flex-fill pl-2">
+                    <div class="row m-0 justify-content-between align-items-baseline">
+                        <strong class="text-primary">{Name}</strong>
+                        <small class="text-secondary">{date}</small>
+                    </div>
+                    <div class=""> {Comment} </div>
+                    <div class="text-right">
+                        <small>from <span class="text-danger">{footer}</span></small>
+                    </div>
+                </div>
+            </li> -->
+        </ul>
+        <div class="container pb-3">
+            <div class="row">
+                <div class="col-9 p-0">
+                    <input class="form-control" label="chat-input" name="chat-input" id="chat-input"></input>
+                </div>
+                <div class="col-3 text-right p-0">
+                    <button id="send" type="button" class="btn btn-primary"> 发送 </button>
+                </div>
             </div>
-            <div class="form-group col-sm-12">
-                <textarea class="form-control" name="chat-input" id="chat-input" rows="3"></textarea>
-            </div>
-            <div class="form-group col-sm-12 text-right">
-                <button id="submit" type="button" class="btn btn-primary">
-                    <span>发送</span>
-                    <span style="display: none;" class="spinner-border spinner-border-sm" role="status"
-                        aria-hidden="true"></span>
-                </button>
-            </div>
-        </form>
+        </div>
     </div>
 </body>
 <script>
-    var submitButton = document.querySelector('#submit');
-    var textbox = document.querySelector('#chat-input');
-
-    function submit() {
-        var message = textbox.value;
-        if (!String(message)) {
-            return;
-        }
-        var buttonSpinner = submitButton.querySelector('.spinner-border');
-        var chatAPI = '/chat';
-        var data = {
-            message: message,
-            time: Date.now().toString()
-        };
-        var options = {
-            body: JSON.stringify(data),
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json'
-            }
-        };
-        // buttonSpinner.style.display = '';
-        fetch(chatAPI, options).then(function (res) {
-            console.log(res);
-            // buttonSpinner.style.display = 'none';
+    (function (window) {
+        var commentList = document.querySelector('#comment');
+        var sendButton = document.querySelector('#send');
+        var textbox = document.querySelector('#chat-input');
+        var io = window.io;
+        var TIME_FORMAT = 'HH:mm:ss';
+        var defaultAvatar =
+            'https://www.bing.com/th?id=AMMS_53c8f51dc7c2d0f4f64fb1cd68e8bbc9&w=72&h=72&c=7&rs=1&qlt=80&cdv=1&dpr=2&pid=16.1';
+        var SOCKET_URL = 'ws://:4000';
+        var socket = io(SOCKET_URL, {
+            path: '/socket'
         });
-    }
-    submitButton.addEventListener('click', submit);
+
+        function parseFooter(text) {
+            var result = '';
+            var i = text.match(/\(/).index;
+            var j = text.match(/\;/).index;
+            result = text.substring(i + 1, j);
+            return result || 'unknown';
+        }
+
+        function parseName(ip, platform) {
+            var name = `${platform}-(${ip})`;
+            return (name || 'Name').replace('::ffff:', '');
+        }
+
+        function renderComment(comment) {
+            var data = {
+                avatar: comment.avatar || defaultAvatar,
+                name: parseName(comment.ip, comment.platform),
+                time: comment.time ? dayjs(comment.time).format(TIME_FORMAT) : dayjs().format(TIME_FORMAT),
+                content: comment.content || 'this is content',
+                footer: parseFooter(comment.userAgent)
+            };
+            var parser = new DOMParser();
+            var template = `<li class="row m-0 shadow-sm">
+                <img class="avatar"
+                    src="{avatar}"
+                    alt="avatar" />
+                <div class="flex-fill pl-2">
+                    <div class="row m-0 justify-content-between align-items-baseline">
+                        <strong class="text-primary">{name}</strong>
+                        <small class="text-secondary">{time}</small>
+                    </div>
+                    <div class=""> {content} </div>
+                    <div class="text-right">
+                        <small>from <span class="text-danger">{footer}</span></small>
+                    </div>
+                </div>
+            </li>`;
+            var commentString = template;
+            Object.keys(data).forEach(function (key) {
+                commentString = commentString.replace(`{${key}}`, data[key]);
+            });
+            return parser.parseFromString(commentString, 'text/html').body.childNodes[0];
+        }
+
+        function send() {
+            var data = {
+                time: Date.now(),
+                platform: navigator.platform,
+                network: navigator.connection.effectiveType,
+                userAgent: navigator.userAgent,
+                content: textbox.value
+            };
+            textbox.value = '';
+            socket.emit('send-chat-from-client', data);
+        }
+        socket.on('receive-chat-from-server', function (message) {
+            var node = renderComment(message);
+            commentList.appendChild(node);
+        });
+        sendButton.addEventListener('click', send);
+    }(window));
 
 </script>
 
