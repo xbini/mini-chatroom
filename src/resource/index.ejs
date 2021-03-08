@@ -1,19 +1,26 @@
 <!DOCTYPE html>
-<html lang="zh-cn">
+<html lang="en">
 
 <head>
     <meta charset="UTF-8">
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Chat App</title>
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@4.6.0/dist/css/bootstrap.min.css"
-        integrity="sha384-B0vP5xmATw1+K9KRQjQERJvTumQW0nPEzvF6L/Z6nronJ3oUOFUFpCjEUQouq2+l" crossorigin="anonymous">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Mini Chat</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@3.3.7/dist/css/bootstrap.min.css"
+        integrity="sha384-BVYiiSIFeK1dGmJRAkycuHAHRg32OmUcww7on3RYdg4Va+PmSTsz/K68vbdEjh4u" crossorigin="anonymous">
     <script src="https://cdn.jsdelivr.net/npm/socket.io-client/dist/socket.io.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/dayjs@1.10.4/dayjs.min.js"></script>
     <style>
+        html,
+        body {
+            height: 100%;
+            max-height: 100%;
+        }
+
         .main {
-            height: 100vh;
-            flex-direction: column;
+            max-height: 100%;
+            height: 100%;
+            position: relative;
         }
 
         .title {
@@ -22,10 +29,11 @@
         }
 
         .comment {
-            height: calc(100vh - 132px);
-            max-height: calc(100vh - 132px);
             overflow: auto;
-            margin: 10px 0;
+            scroll-behavior: smooth;
+            height: calc(100% - 120px);
+            max-height: calc(100% - 120px);
+            margin: 10px 0 0 0;
         }
 
         .comment img.avatar {
@@ -33,45 +41,61 @@
             height: 40px;
             max-width: 40px;
             max-height: 40px;
+            border-radius: 50%;
         }
 
         .comment li {
-            padding-top: 10px;
+            margin-bottom: 10px;
+        }
+
+        .comment li:last-of-type {
+            margin-bottom: 0;
+        }
+
+        .comment .info {
+            margin-left: 50px;
+        }
+
+        .content-image {
+            max-width: 100px;
+        }
+
+        .content {
+            word-break: break-all;
+        }
+
+        .footer {
+            position: absolute;
+            bottom: 15px;
+            width: 100%;
+        }
+
+        .p-0 {
+            padding: 0;
+        }
+
+        .btn {
+            text-align: center;
+            padding: 0;
         }
 
     </style>
 </head>
 
 <body>
-    <div class="container-fluid text-body row m-0 main">
-        <div class="row bg-primary">
-            <h4 class="col-12 text-white title">Chat App</h4>
+    <div class="container main bg-info">
+        <div class="header row bg-primary">
+            <h4 class="col-xs-12 title">Mini Chat</h4>
         </div>
         <ul class="comment list-unstyled" id="comment">
-            <!-- <li class="row m-0 shadow-sm">
-                <img class="avatar"
-                    src="https://www.bing.com/th?id=AMMS_53c8f51dc7c2d0f4f64fb1cd68e8bbc9&w=72&h=72&c=7&rs=1&qlt=80&cdv=1&dpr=2&pid=16.1"
-                    alt="avatar" />
-                <div class="flex-fill pl-2">
-                    <div class="row m-0 justify-content-between align-items-baseline">
-                        <strong class="text-primary">{Name}</strong>
-                        <small class="text-secondary">{date}</small>
-                    </div>
-                    <div class=""> {Comment} </div>
-                    <div class="text-right">
-                        <small>from <span class="text-danger">{footer}</span></small>
-                    </div>
-                </div>
-            </li> -->
+            <!-- render by script -->
         </ul>
-        <div class="container pb-3">
-            <div class="row">
-                <div class="col-9 p-0">
-                    <input class="form-control" label="chat-input" name="chat-input" id="chat-input"></input>
-                </div>
-                <div class="col-3 text-right p-0">
-                    <button id="send" type="button" class="btn btn-primary"> 发送 </button>
-                </div>
+        <div class="footer row">
+            <div class="col-xs-9">
+                <input autofocus class="form-control" label="chat-input" name="chat-input" id="chat-input"></input>
+            </div>
+            <div class="col-xs-3 text-right">
+                <button id="send" type="button" class="form-control btn btn-primary"> Send </button>
             </div>
         </div>
     </div>
@@ -89,39 +113,53 @@
         var socket = io(SOCKET_URL, {
             path: '/socket'
         });
+        var DEVICE_LIST = ['iphone', 'ipad', 'android'];
+        var SOUGOU_IMG_REG = /点击\[(.*)\]查看表情/;
+        var avatar = '';
 
-        function parseFooter(text) {
+        function parseFooter(userAgent) {
             var result = '';
-            var i = text.match(/\(/).index;
-            var j = text.match(/\;/).index;
-            result = text.substring(i + 1, j);
+            var i = userAgent.match(/\(/).index;
+            var j = userAgent.match(/\)/).index;
+            result = userAgent.substring(i + 1, j);
             return result || 'unknown';
         }
 
-        function parseName(ip, platform) {
-            var name = `${platform}-(${ip})`;
+        function parseName(ip, tag) {
+            var name = `${tag}-(${ip})`;
             return (name || 'Name').replace('::ffff:', '');
+        }
+
+        function parseContent(content) {
+            var result = content;
+            var matched = content.match(SOUGOU_IMG_REG);
+            var url = matched ? matched[1] : undefined;
+            if (url) {
+                result = "<img class='content-image' src='" + url + "'/>";
+            }
+            return result || 'this is content';
         }
 
         function renderComment(comment) {
             var data = {
                 avatar: comment.avatar || defaultAvatar,
-                name: parseName(comment.ip, comment.platform),
+                name: parseName(comment.ip, comment.tag),
                 time: comment.time ? dayjs(comment.time).format(TIME_FORMAT) : dayjs().format(TIME_FORMAT),
-                content: comment.content || 'this is content',
+                content: parseContent(comment.content),
                 footer: parseFooter(comment.userAgent)
             };
             var parser = new DOMParser();
-            var template = `<li class="row m-0 shadow-sm">
-                <img class="avatar"
+            var template = `
+            <li class="clearfix">
+                <img class="avatar pull-left"
                     src="{avatar}"
                     alt="avatar" />
-                <div class="flex-fill pl-2">
-                    <div class="row m-0 justify-content-between align-items-baseline">
+                <div class="info">
+                    <div>
                         <strong class="text-primary">{name}</strong>
-                        <small class="text-secondary">{time}</small>
+                        <small class="text-muted">{time}</small>
                     </div>
-                    <div class=""> {content} </div>
+                    <div class="content"> {content} </div>
                     <div class="text-right">
                         <small>from <span class="text-danger">{footer}</span></small>
                     </div>
@@ -134,8 +172,20 @@
             return parser.parseFromString(commentString, 'text/html').body.childNodes[0];
         }
 
+        function generateAvatar() {
+            var tag = parseInt(Math.random() * 10000000, 10);
+            return 'https://avatars.githubusercontent.com/u/' + tag + '?s=60&v=4';
+        }
+
         function send() {
+            if (textbox.value.length === 0) {
+                return false;
+            }
+            if (avatar.length === 0) {
+                avatar = generateAvatar();
+            }
             var data = {
+                avatar: avatar,
                 time: Date.now(),
                 platform: navigator.platform,
                 network: navigator.connection.effectiveType,
@@ -145,11 +195,27 @@
             textbox.value = '';
             socket.emit('send-chat-from-client', data);
         }
+        var timer = -1;
         socket.on('receive-chat-from-server', function (message) {
             var node = renderComment(message);
             commentList.appendChild(node);
+            clearTimeout(timer);
+            timer = setTimeout(function () {
+                var y = commentList.scrollHeight;
+                commentList.scrollTo(0, y);
+            }, 20);
         });
         sendButton.addEventListener('click', send);
+        textbox.addEventListener('keydown', function (e) {
+            if (e.keyCode === 13) {
+                send();
+            }
+        });
+        textbox.addEventListener('input', function (e) {
+            if (SOUGOU_IMG_REG.test(textbox.value)) {
+                send();
+            }
+        });
     }(window));
 
 </script>

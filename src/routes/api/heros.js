@@ -1,5 +1,5 @@
 import express from 'express';
-import { schema } from '../utils/tools';
+import { schema } from '../../utils/tools';
 
 const herosRouter = express.Router();
 
