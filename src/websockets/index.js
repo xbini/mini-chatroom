@@ -4,7 +4,8 @@ export default function registerWebSocket(server) {
     const socket = io(server, {
         path: '/socket'
     });
-    let count = 0;
+    const INIT_TYPE = 'init';
+    const ALWAYS_PUSH_TYPE = 'always-push';
     const SEND_TYPE = 'send-chat-from-client';
     const RECEIVE_TYPE = 'receive-chat-from-server';
     let sockets = [];
@@ -12,7 +13,15 @@ export default function registerWebSocket(server) {
         const tag = skt.handshake.query.t;
         console.log(`socket tag = ${tag} has connected`);
         sockets.push(skt);
-        count++;
+        skt.emit(INIT_TYPE, {
+            tag,
+            count: sockets.length
+        });
+        sockets.forEach(s => {
+            s.emit(ALWAYS_PUSH_TYPE, {
+                count: sockets.length
+            });
+        });
         skt.on(SEND_TYPE, (message) => {
             const data = {
                 ...message,
@@ -25,9 +34,13 @@ export default function registerWebSocket(server) {
             });
         });
         skt.on('disconnect', () => {
-            count--;
             console.log(`socket-${tag} got disconnected`);
             sockets = sockets.filter((s) => s !== skt);
+            sockets.forEach(s => {
+                s.emit(ALWAYS_PUSH_TYPE, {
+                    count: sockets.length
+                });
+            });
         });
     });
 }

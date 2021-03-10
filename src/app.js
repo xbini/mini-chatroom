@@ -1,13 +1,13 @@
 import express from 'express';
-import indexRouter from './routes';
-import herosRouter from './routes/api/heros';
+import { routes } from './routes';
 
 const app = express();
 
+app.set('view engine', 'ejs');
+app.set('views', './src/pages');
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
-app.use('/', indexRouter);
-app.use('/api/heros', herosRouter);
+routes.forEach(route => app.use(route.path, route.router));
 
 export default app;

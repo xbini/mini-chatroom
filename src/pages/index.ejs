@@ -5,7 +5,7 @@
     <meta charset="UTF-8">
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>Mini Chat</title>
+    <title>Mini Chatroom</title>
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@3.3.7/dist/css/bootstrap.min.css"
         integrity="sha384-BVYiiSIFeK1dGmJRAkycuHAHRg32OmUcww7on3RYdg4Va+PmSTsz/K68vbdEjh4u" crossorigin="anonymous">
     <script src="https://cdn.jsdelivr.net/npm/socket.io-client/dist/socket.io.js"></script>
@@ -79,13 +79,17 @@
             padding: 0;
         }
 
+        .count {
+            color: yellow;
+        }
+
     </style>
 </head>
 
 <body>
     <div class="container main bg-info">
         <div class="header row bg-primary">
-            <h4 class="col-xs-12 title">Mini Chat</h4>
+            <h4 class="col-xs-12 title"> Mini Chatroom <small class="count" id="count"></small></h4>
         </div>
         <ul class="comment list-unstyled" id="comment">
             <!-- render by script -->
@@ -105,6 +109,7 @@
         var commentList = document.querySelector('#comment');
         var sendButton = document.querySelector('#send');
         var textbox = document.querySelector('#chat-input');
+        var countEL = document.querySelector('#count');
         var io = window.io;
         var TIME_FORMAT = 'HH:mm:ss';
         var defaultAvatar =
@@ -116,6 +121,7 @@
         var DEVICE_LIST = ['iphone', 'ipad', 'android'];
         var SOUGOU_IMG_REG = /点击\[(.*)\]查看表情/;
         var avatar = '';
+        var timer = -1;
 
         function parseFooter(userAgent) {
             var result = '';
@@ -177,6 +183,11 @@
             return 'https://avatars.githubusercontent.com/u/' + tag + '?s=60&v=4';
         }
 
+        function updateCount(data) {
+            var count = data.count;
+            countEL.innerHTML = count + ' people online';
+        }
+
         function send() {
             if (textbox.value.length === 0) {
                 return false;
@@ -195,7 +206,13 @@
             textbox.value = '';
             socket.emit('send-chat-from-client', data);
         }
-        var timer = -1;
+        socket.on('init', function (message) {
+            updateCount(message);
+            document.title = 'Mini Chatroom(' + message.tag + ')';
+        });
+        socket.on('always-push', function (message) {
+            updateCount(message);
+        });
         socket.on('receive-chat-from-server', function (message) {
             var node = renderComment(message);
             commentList.appendChild(node);

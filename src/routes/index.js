@@ -1,14 +1,24 @@
 import express from 'express';
-import path from 'path';
-import ejs from 'ejs';
+import herosAPIRouter from './api/heros';
+import locationAPIRouter from './api/china-location';
 
-const template_path = path.join(__dirname, '../resource/index.ejs');
-const indexRouter = express.Router();
+const indexPageRouter = express.Router();
 
-indexRouter.get('/', function (req, res, next) {
-  ejs.renderFile(template_path, {}, {}, function (err, str) {
-    res.status(200).send(str);
-  });
+indexPageRouter.get('/', function (req, res, next) {
+  res.render('index', {});
 });
 
-export default indexRouter;
+export const routes = [
+  {
+    path: '/',
+    router: indexPageRouter
+  },
+  {
+    path: '/api/china-location',
+    router: locationAPIRouter
+  },
+  {
+    path: '/api/heros',
+    router: herosAPIRouter
+  }
+];
