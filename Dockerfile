@@ -1,6 +1,6 @@
 FROM node:14
 
-WORKDIR /usr/local/express-start
+WORKDIR /usr/local/mini-chatroom
 
 COPY . .
 
