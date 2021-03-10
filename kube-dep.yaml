@@ -21,7 +21,7 @@ spec:
             - containerPort: 4000
           volumeMounts:
             - name: host-volume #设置的名称，和下面的name要一样的
-              mountPath: /usr/local/app/logs #需要挂载的目录
+              mountPath: /usr/local/express-start/logs #需要挂载的目录
               subPath: express-start-logs #卷的子目录，也就是在nfs服务目录里生成这个子目录
       volumes:
         - name: host-volume #这个卷的名称，和上面的name要一样的

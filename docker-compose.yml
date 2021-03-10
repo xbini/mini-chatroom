@@ -4,8 +4,8 @@ services:
     build:
       context: ./
       dockerfile: Dockerfile
-    volumes:
-      - ./logs2:/usr/local/app/logs
+    # volumes:
+      # - ./logs2:/usr/local/app/logs
     ports:
       - "4000:4000"
     expose:

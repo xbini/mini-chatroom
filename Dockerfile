@@ -1,9 +1,9 @@
 FROM node:14
 
-WORKDIR /usr/local/app
+WORKDIR /usr/local/express-start
 
 COPY . .
 
-CMD [ "npm", "run", "serve"]
+CMD [ "npm", "run", "start"]
 
 EXPOSE 4000
