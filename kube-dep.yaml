@@ -1,7 +1,6 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  namespace: kong
   name: mini-chatroom
 spec:
   replicas: 1
@@ -19,20 +18,11 @@ spec:
           imagePullPolicy: IfNotPresent
           ports:
             - containerPort: 4000
-          volumeMounts:
-            - name: host-volume #设置的名称，和下面的name要一样的
-              mountPath: /usr/local/mini-chatroom/logs #需要挂载的目录
-              subPath: mini-chatroom-logs #卷的子目录，也就是在nfs服务目录里生成这个子目录
-      volumes:
-        - name: host-volume #这个卷的名称，和上面的name要一样的
-          hostPath:
-            path: /root/data
 
 ---
 apiVersion: v1
 kind: Service
 metadata:
-  namespace: kong
   name: mini-chatroom
 spec:
   selector:
@@ -44,60 +34,57 @@ spec:
       targetPort: 4000
 
 ---
-apiVersion: configuration.konghq.com/v1
-kind: KongIngress
-metadata:
-  name: common-kong-ingress
-  namespace: kong
-proxy:
-  path: /
-  protocol: https
-route:
-  strip_path: false
-  preserve_host: false
-  methods:
-    - POST
-    - GET
-    - PUT
-    - PATCH
-    - DELETE
-    - OPTIONS
-    - HEAD
----
-apiVersion: v1
-kind: Service
-metadata:
-  name: joke-service
-  namespace: kong
-  annotations:
-    konghq.com/override: common-kong-ingress
-    configuration.konghq.com: common-kong-ingress
-spec:
-  ports:
-    - protocol: TCP
-      port: 443
-      targetPort: 443
-  type: ExternalName
-  externalName: 47.100.122.205
----
-apiVersion: extensions/v1beta1
-kind: Ingress
-metadata:
-  name: mini-chatroom-ingress
-  namespace: kong
-  annotations:
-    konghq.com/override: common-kong-ingress
-    kubernetes.io/ingress.class: kong
-spec:
-  rules:
-    - host: lb.learn.com1
-      http:
-        paths:
-          - path: /
-            backend:
-              serviceName: mini-chatroom
-              servicePort: 4000
-          - path: /getJoke
-            backend:
-              serviceName: joke-service
-              servicePort: 443
+# apiVersion: configuration.konghq.com/v1
+# kind: KongIngress
+# metadata:
+#   name: common-kong-ingress
+# proxy:
+#   path: /
+#   protocol: https
+# route:
+#   strip_path: false
+#   preserve_host: false
+#   methods:
+#     - POST
+#     - GET
+#     - PUT
+#     - PATCH
+#     - DELETE
+#     - OPTIONS
+#     - HEAD
+# ---
+# apiVersion: v1
+# kind: Service
+# metadata:
+#   name: joke-service
+#   annotations:
+#     konghq.com/override: common-kong-ingress
+#     configuration.konghq.com: common-kong-ingress
+# spec:
+#   ports:
+#     - protocol: TCP
+#       port: 443
+#       targetPort: 443
+#   type: ExternalName
+#   externalName: 47.100.122.205
+# ---
+# apiVersion: extensions/v1beta1
+# kind: Ingress
+# metadata:
+#   name: mini-chatroom-ingress
+#   annotations:
+#     konghq.com/override: common-kong-ingress
+#     kubernetes.io/ingress.class: kong
+# spec:
+#   rules:
+#     - host: lb.learn.com1
+#       http:
+#         paths:
+#           - path: /
+#             backend:
+#               serviceName: mini-chatroom
+#               servicePort: 4000
+#           - path: /getJoke
+#             backend:
+#               serviceName: joke-service
+#               servicePort: 443
