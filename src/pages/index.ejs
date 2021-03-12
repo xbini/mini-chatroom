@@ -122,6 +122,7 @@
         var SOUGOU_IMG_REG = /点击\[(.*)\]查看表情/;
         var avatar = '';
         var timer = -1;
+        window.MINI_CHATROOM_TAG = '';
 
         function parseFooter(userAgent) {
             var result = '';
@@ -149,6 +150,7 @@
         function renderComment(comment) {
             var data = {
                 avatar: comment.avatar || defaultAvatar,
+                selfClass: window.MINI_CHATROOM_TAG === comment.tag ? 'bg-danger' : '',
                 name: parseName(comment.ip, comment.tag),
                 time: comment.time ? dayjs(comment.time).format(TIME_FORMAT) : dayjs().format(TIME_FORMAT),
                 content: parseContent(comment.content),
@@ -162,7 +164,7 @@
                     alt="avatar" />
                 <div class="info">
                     <div>
-                        <strong class="text-primary">{name}</strong>
+                        <strong class="text-primary {selfClass}">{name}</strong>
                         <small class="text-muted">{time}</small>
                     </div>
                     <div class="content"> {content} </div>
@@ -208,6 +210,7 @@
         }
         socket.on('init', function (message) {
             updateCount(message);
+            window.MINI_CHATROOM_TAG = message.tag;
             document.title = 'Mini Chatroom(' + message.tag + ')';
         });
         socket.on('always-push', function (message) {
