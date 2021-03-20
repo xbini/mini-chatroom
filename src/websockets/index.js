@@ -1,8 +1,15 @@
 import io from 'socket.io'
+import { CORS_HOSTS, CORS_METHODS } from '../utils/constants';
 
 export default function registerWebSocket(server) {
     const socket = io(server, {
-        path: '/socket'
+        path: '/socket',
+        cors: {
+            origin: CORS_HOSTS.join(),
+            methods: CORS_METHODS,
+            allowedHeaders: "*",
+            credentials: true
+        }
     });
     const INIT_TYPE = 'init';
     const ALWAYS_PUSH_TYPE = 'always-push';
